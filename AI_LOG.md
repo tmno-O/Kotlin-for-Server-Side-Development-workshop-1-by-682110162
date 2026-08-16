@@ -81,3 +81,38 @@ git add src/main/kotlin/Workshop1.kt src/main/kotlin/Workshop2.kt gradle.propert
 git commit -m "feat: implement workshop 1 unit converter"
 git push -u origin Workshop-1
 ```
+
+## 7. ValidateCitizenId — test-first flow (session still 1, tutor mode)
+
+**Asked:** implement code so `ValidateCitizenIdTest` passes.
+
+**AI declined:** `AGENTS.md` `CURRENT_SESSION = 1` = tutor mode, no solution
+code even with tests provided. Gave hints instead (`.length`, `.all { it.isDigit() }`).
+
+**How to run tests:** AI gave `./gradlew test --tests "ValidateCitizenIdTest"`.
+Also flagged test file had wrong extension (`.kit` instead of `.kt`) — fixed.
+
+**Build failure — stray invisible character:** `compileKotlin` failed with
+`Syntax error: Expecting a top level declaration` at `Workshop1.kt:1:1`. AI
+used `xxd` to inspect raw bytes and found a stray `€` character
+(`e2 82 ac`) glued before `fun main()` — invisible in normal editor view,
+likely a copy-paste artifact. First self-reported fix didn't actually save;
+AI re-checked bytes, confirmed still present, applied the fix directly.
+
+**Code review caught missing edge case:** AI reviewed my test file against
+the implementation, noted `Char.isDigit()` is Unicode-aware and accepts
+Thai numerals (๐-๙), so a 13-Thai-digit string would incorrectly validate
+as a valid ID — untested case matching course rule's explicit
+Thai-language edge-case guidance.
+
+**Scope grew — normalizeCitizenId:** I extended the test file myself to
+require a new `normalizeCitizenId` function (Thai digits → Arabic digits)
+and changed `validateCitizenId`'s expectation for Thai input from `false`
+to `true` (normalize-then-validate). First run failed compile
+(`Unresolved reference 'normalizeCitizenId'`) since I hadn't written it
+yet. I implemented it; re-run passed, `BUILD SUCCESSFUL`, 6/6 tests green.
+
+**Where AI stayed hands-off:** all implementation code (`validateCitizenId`,
+`normalizeCitizenId`, test cases) written by me; AI only reviewed, ran
+Gradle, and diagnosed failures — consistent with tutor-mode restriction
+since session number was never changed from 1.
